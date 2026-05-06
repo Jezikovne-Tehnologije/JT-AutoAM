@@ -1,2 +1,10 @@
 /.idea
 /models/saved/*.pt
+/__pycache__
+/tmp
+/graphs
+
+.venv
+venv
+.DS_Store
+.vscode
