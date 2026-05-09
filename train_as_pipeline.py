@@ -4,7 +4,7 @@ from collections import Counter
 
 import torch
 from sklearn.metrics import classification_report, f1_score
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, random_split
 from tqdm import tqdm
 from transformers import AutoTokenizer
 
@@ -41,11 +41,13 @@ def main():
     parser.add_argument('--train', help='Training JSONL path')
     parser.add_argument('--test', help='Test JSONL path')
     parser.add_argument('--output', default='models/saved/as_pipeline.pt')
-    parser.add_argument('--epochs', type=int, default=10)
+    parser.add_argument('--epochs', type=int, default=5)
     parser.add_argument('--batch_size', type=int, default=8)
-    parser.add_argument('--lr', type=float, default=2e-5)
+    parser.add_argument('--lr', type=float, default=5e-6)
     parser.add_argument('--max_len', type=int, default=256)
     parser.add_argument('--device', default='auto')
+    parser.add_argument('--val_ratio', type=float, default=0.15)
+    parser.add_argument('--seed', type=int, default=665)
     args = parser.parse_args()
 
     device = args.device
@@ -59,13 +61,22 @@ def main():
 
     train_samples = build_training_samples(load_json_or_jsonl(train_path), label2id)
     test_samples = build_training_samples(load_json_or_jsonl(test_path), label2id)
-    print('train samples:', len(train_samples), dict(Counter(sample['label'] for sample in train_samples)))
+    print('all train samples:', len(train_samples), dict(Counter(sample['label'] for sample in train_samples)))
     print('test samples:', len(test_samples), dict(Counter(sample['label'] for sample in test_samples)))
 
     tokenizer = AutoTokenizer.from_pretrained(PLM)
     model = RelationStrengthModel(PLM, len(AS_LABELS)).to(device)
     collate_fn = make_collate_fn(tokenizer, device, args.max_len)
-    train_loader = DataLoader(RelationStrengthDataset(train_samples), batch_size=args.batch_size, shuffle=True, collate_fn=collate_fn)
+    full_train_dataset = RelationStrengthDataset(train_samples)
+    val_size = max(1, int(len(full_train_dataset) * args.val_ratio))
+    train_size = len(full_train_dataset) - val_size
+    split_generator = torch.Generator().manual_seed(args.seed)
+    train_dataset, val_dataset = random_split(full_train_dataset, [train_size, val_size], generator=split_generator)
+    print('split train samples:', train_size)
+    print('split val samples:', val_size)
+
+    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, collate_fn=collate_fn)
+    val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, collate_fn=collate_fn)
     test_loader = DataLoader(RelationStrengthDataset(test_samples), batch_size=args.batch_size, shuffle=False, collate_fn=collate_fn)
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=0.01)
 
@@ -86,7 +97,8 @@ def main():
             optimizer.step()
             total_loss += loss.item()
             train_bar.set_postfix(loss=total_loss / max(len(train_bar), 1))
-        score = evaluate(model, test_loader, id2label)
+        print('validation performance')
+        score = evaluate(model, val_loader, id2label)
         if score > best_f1:
             best_f1 = score
             torch.save({
@@ -96,6 +108,11 @@ def main():
                 'dataset': args.dataset
             }, args.output)
             print('saved best AS pipeline model:', args.output)
+
+    print('final test performance from best validation checkpoint')
+    checkpoint = torch.load(args.output, map_location=device, weights_only=False)
+    model.load_state_dict(checkpoint['model_state'])
+    evaluate(model, test_loader, id2label)
 
 
 if __name__ == '__main__':

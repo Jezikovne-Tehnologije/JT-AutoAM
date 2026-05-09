@@ -48,6 +48,14 @@ Training data also includes gold `AS`:
 python train_as_pipeline.py --dataset PE --output models/saved/as_pipeline.pt
 ```
 
+The script splits the training set internally:
+
+```text
+85% train / 15% validation
+```
+
+After each epoch it evaluates on the validation split and saves the best validation checkpoint. The original test file is only used at the end as the final test check.
+
 For CDCP:
 
 ```bash
