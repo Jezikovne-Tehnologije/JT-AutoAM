@@ -79,5 +79,14 @@ def train_span_model():
             torch.save(model.state_dict(), save_path)
             print(f"Model saved (best macro F1: {best_f1:.4f})!")
 
+    print("\n" + "--------" + " BEST MODEL EVALUATION " + "--------")
+    
+    final_model = SpanDetector(PLM).to(device)
+    final_model.load_state_dict(torch.load(save_path, map_location=device, weights_only=False))
+    
+    report, macro_f1 = evaluate(final_model, test_loader, device)
+    print("\nPerformance on test dataset (Best Model):\n", report)
+    print(f"Final F1: {macro_f1:.4f}")
+
 if __name__ == '__main__':
     train_span_model()
