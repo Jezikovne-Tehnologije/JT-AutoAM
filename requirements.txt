@@ -2,3 +2,5 @@ torch
 transformers
 tqdm
 scikit-learn
+numpy
+huggingface_hub
