@@ -62,6 +62,18 @@ You can change the validation frequency:
 python train_as_pipeline.py --dataset PE --val_every 2
 ```
 
+The AS loss also includes an ordinal distance penalty. A prediction that is two labels away from the correct answer is punished more than a prediction that is one label away:
+
+```text
+loss = cross_entropy + distance_loss_weight * squared_label_distance
+```
+
+Default:
+
+```bash
+python train_as_pipeline.py --dataset PE --distance_loss_weight 0.2
+```
+
 For CDCP:
 
 ```bash

@@ -56,6 +56,7 @@ def main():
     parser.add_argument('--device', default='auto')
     parser.add_argument('--val_ratio', type=float, default=0.15)
     parser.add_argument('--val_every', type=int, default=5)
+    parser.add_argument('--distance_loss_weight', type=float, default=0.2)
     parser.add_argument('--seed', type=int, default=665)
     args = parser.parse_args()
 
@@ -74,7 +75,7 @@ def main():
     print('test samples:', len(test_samples), dict(Counter(sample['label'] for sample in test_samples)))
 
     tokenizer = AutoTokenizer.from_pretrained(PLM)
-    model = RelationStrengthModel(PLM, len(AS_LABELS)).to(device)
+    model = RelationStrengthModel(PLM, len(AS_LABELS), distance_loss_weight=args.distance_loss_weight).to(device)
     collate_fn = make_collate_fn(tokenizer, device, args.max_len)
     full_train_dataset = RelationStrengthDataset(train_samples)
     val_size = max(1, int(len(full_train_dataset) * args.val_ratio))
@@ -115,7 +116,8 @@ def main():
                     'model_state': model.state_dict(),
                     'plm': PLM,
                     'labels': AS_LABELS,
-                    'dataset': args.dataset
+                    'dataset': args.dataset,
+                    'distance_loss_weight': args.distance_loss_weight
                 }, args.output)
                 print('saved best AS pipeline model:', args.output)
 

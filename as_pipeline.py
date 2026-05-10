@@ -119,9 +119,11 @@ def make_collate_fn(tokenizer, device, max_len):
 
 
 class RelationStrengthModel(nn.Module):
-    def __init__(self, plm=PLM, num_labels=len(AS_LABELS), dropout=0.3):
+    def __init__(self, plm=PLM, num_labels=len(AS_LABELS), dropout=0.3, distance_loss_weight=0.2):
         super().__init__()
         self.plm = plm
+        self.num_labels = num_labels
+        self.distance_loss_weight = distance_loss_weight
         self.encoder = AutoModel.from_pretrained(plm)
         hidden_size = self.encoder.config.hidden_size
         self.classifier = nn.Sequential(
@@ -135,7 +137,12 @@ class RelationStrengthModel(nn.Module):
         logits = self.classifier(pooled)
         loss = None
         if labels != None:
-            loss = nn.functional.cross_entropy(logits, labels)
+            ce_loss = nn.functional.cross_entropy(logits, labels)
+            probs = nn.functional.softmax(logits, dim=-1)
+            class_ids = torch.arange(self.num_labels, device=logits.device).float()
+            squared_distance = (class_ids.unsqueeze(0) - labels.unsqueeze(1).float()).pow(2)
+            distance_loss = (probs * squared_distance).sum(dim=-1).mean()
+            loss = ce_loss + self.distance_loss_weight * distance_loss
         return logits, loss
 
 

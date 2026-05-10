@@ -31,7 +31,11 @@ def main():
     checkpoint = torch.load(args.model, map_location=device, weights_only=False)
     labels = checkpoint['labels']
     id2label = dict(enumerate(labels))
-    model = RelationStrengthModel(checkpoint['plm'], len(labels)).to(device)
+    model = RelationStrengthModel(
+        checkpoint['plm'],
+        len(labels),
+        distance_loss_weight=checkpoint.get('distance_loss_weight', 0.2)
+    ).to(device)
     model.load_state_dict(checkpoint['model_state'])
     model.eval()
     tokenizer = AutoTokenizer.from_pretrained(checkpoint['plm'])
