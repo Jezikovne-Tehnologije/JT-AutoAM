@@ -30,9 +30,17 @@ def evaluate(model, dataloader, id2label):
             )
             preds.extend(torch.argmax(logits, dim=-1).cpu().tolist())
             golds.extend(batch['labels'].cpu().tolist())
-    print('macro_f1', f1_score(golds, preds, average='macro'))
-    print(classification_report(golds, preds, target_names=[id2label[i] for i in range(len(id2label))], digits=3))
-    return f1_score(golds, preds, average='macro')
+    labels = list(range(len(id2label)))
+    print('macro_f1', f1_score(golds, preds, labels=labels, average='macro', zero_division=0))
+    print(classification_report(
+        golds,
+        preds,
+        labels=labels,
+        target_names=[id2label[i] for i in labels],
+        digits=3,
+        zero_division=0
+    ))
+    return f1_score(golds, preds, labels=labels, average='macro', zero_division=0)
 
 
 def main():
@@ -41,12 +49,13 @@ def main():
     parser.add_argument('--train', help='Training JSONL path')
     parser.add_argument('--test', help='Test JSONL path')
     parser.add_argument('--output', default='models/saved/as_pipeline.pt')
-    parser.add_argument('--epochs', type=int, default=5)
+    parser.add_argument('--epochs', type=int, default=50)
     parser.add_argument('--batch_size', type=int, default=8)
     parser.add_argument('--lr', type=float, default=5e-6)
     parser.add_argument('--max_len', type=int, default=256)
     parser.add_argument('--device', default='auto')
     parser.add_argument('--val_ratio', type=float, default=0.15)
+    parser.add_argument('--val_every', type=int, default=5)
     parser.add_argument('--seed', type=int, default=665)
     args = parser.parse_args()
 
@@ -97,17 +106,18 @@ def main():
             optimizer.step()
             total_loss += loss.item()
             train_bar.set_postfix(loss=total_loss / max(len(train_bar), 1))
-        print('validation performance')
-        score = evaluate(model, val_loader, id2label)
-        if score > best_f1:
-            best_f1 = score
-            torch.save({
-                'model_state': model.state_dict(),
-                'plm': PLM,
-                'labels': AS_LABELS,
-                'dataset': args.dataset
-            }, args.output)
-            print('saved best AS pipeline model:', args.output)
+        if epoch % args.val_every == 0 or epoch == args.epochs:
+            print('validation performance')
+            score = evaluate(model, val_loader, id2label)
+            if score > best_f1:
+                best_f1 = score
+                torch.save({
+                    'model_state': model.state_dict(),
+                    'plm': PLM,
+                    'labels': AS_LABELS,
+                    'dataset': args.dataset
+                }, args.output)
+                print('saved best AS pipeline model:', args.output)
 
     print('final test performance from best validation checkpoint')
     checkpoint = torch.load(args.output, map_location=device, weights_only=False)

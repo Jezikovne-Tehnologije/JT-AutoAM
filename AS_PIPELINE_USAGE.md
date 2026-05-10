@@ -54,7 +54,13 @@ The script splits the training set internally:
 85% train / 15% validation
 ```
 
-After each epoch it evaluates on the validation split and saves the best validation checkpoint. The original test file is only used at the end as the final test check.
+Every 5 epochs it evaluates on the validation split and saves the best validation checkpoint. The original test file is only used at the end as the final test check.
+
+You can change the validation frequency:
+
+```bash
+python train_as_pipeline.py --dataset PE --val_every 2
+```
 
 For CDCP:
 
