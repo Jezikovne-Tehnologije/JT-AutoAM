@@ -3,12 +3,12 @@ import torch.nn as nn
 from transformers import AutoModel
 
 class SpanDetector(nn.Module):
-    def __init__(self, plm_name, num_labels=3): # 0: O, 1: B, 2: I
+    def __init__(self, plm_name, num_labels=3, class_weights=[10.0, 10.0, 1.0]): # 0: O, 1: B, 2: I
         super().__init__()
         self.bert = AutoModel.from_pretrained(plm_name)
         self.dropout = nn.Dropout(0.1)
         self.classifier = nn.Linear(self.bert.config.hidden_size, num_labels)
-        self.register_buffer('weights', torch.tensor([1.0, 10.0, 5.0]))
+        self.register_buffer('weights', torch.tensor(class_weights))
         self.criterion = nn.CrossEntropyLoss(weight=self.weights)
 
     def forward(self, input_ids, attention_mask, labels=None):

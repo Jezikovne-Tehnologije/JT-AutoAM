@@ -7,10 +7,10 @@ import os
 from sklearn.metrics import classification_report, f1_score
 import numpy as np
 
-dataset = 'PE'
+dataset = 'CDCP'
 PLM = 'roberta-base'
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-epochs = 20
+epochs = 50
 lr = 2e-5
 batch_size = 8
 save_path = './models/saved/span_best.pt'
@@ -44,14 +44,15 @@ def train_span_model():
     train_loader = get_span_dataloader(f'./data/{dataset}/train.jsonl', tokenizer, batch_size)
     test_loader = get_span_dataloader(f'./data/{dataset}/test.jsonl', tokenizer, batch_size, shuffle=False)
 
-    model = SpanDetector(PLM).to(device)
+    class_weights = [10.0, 10.0, 1.0] if dataset == "CDCP" else [1.0, 10.0, 5.0]
+    model = SpanDetector(PLM, class_weights=class_weights).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
 
     best_f1 = 0
     
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
 
-    print("Starting training...")
+    print(f"Starting training on {dataset}...")
     for epoch in range(epochs):
         model.train()
         total_loss = 0
