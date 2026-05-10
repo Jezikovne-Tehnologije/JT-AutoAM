@@ -62,6 +62,12 @@ You can change the validation frequency:
 python train_as_pipeline.py --dataset PE --val_every 2
 ```
 
+You can cap CUDA memory use for this training process:
+
+```bash
+python train_as_pipeline.py --dataset PE --gpu_memory_fraction 0.65
+```
+
 The AS loss also includes an ordinal distance penalty. A prediction that is two labels away from the correct answer is punished more than a prediction that is one label away:
 
 ```text

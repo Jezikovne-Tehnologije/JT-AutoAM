@@ -57,12 +57,27 @@ def main():
     parser.add_argument('--val_ratio', type=float, default=0.15)
     parser.add_argument('--val_every', type=int, default=5)
     parser.add_argument('--distance_loss_weight', type=float, default=0.2)
+    parser.add_argument(
+        '--gpu_memory_fraction',
+        type=float,
+        help='Optional CUDA memory cap for this process, for example 0.65 for 65%%.'
+    )
     parser.add_argument('--seed', type=int, default=665)
     args = parser.parse_args()
 
     device = args.device
     if device == 'auto':
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    if args.gpu_memory_fraction is not None:
+        if not 0 < args.gpu_memory_fraction <= 1:
+            raise ValueError('--gpu_memory_fraction must be greater than 0 and less than or equal to 1')
+        cuda_device = torch.device(device)
+        if cuda_device.type != 'cuda':
+            print('--gpu_memory_fraction was set, but CUDA is not selected; ignoring memory cap.')
+        else:
+            device_index = cuda_device.index if cuda_device.index is not None else torch.cuda.current_device()
+            torch.cuda.set_per_process_memory_fraction(args.gpu_memory_fraction, device=device_index)
+            print(f'CUDA memory cap: {args.gpu_memory_fraction:.0%} on device {device_index}')
 
     train_path = args.train or f'data/{args.dataset}/train.jsonl'
     test_path = args.test or f'data/{args.dataset}/test.jsonl'
