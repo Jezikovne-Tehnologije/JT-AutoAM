@@ -17,8 +17,10 @@ seed = 665
 dataset = 'PE'
 dataset_path = './data/' + dataset
 save_path = './models/saved/best.pt'
+# PLM = 'distilroberta-base'
+# PLM = 'microsoft/MiniLM-L12-H384-uncased'
 PLM = 'roberta-base'
-
+# PLM = 'roberta-large'
 AC_type = {
     'CDCP': ['value', 'policy', 'testimony', 'fact', 'reference'],
     'PE': ['MajorClaim', 'Claim', 'Premise']
