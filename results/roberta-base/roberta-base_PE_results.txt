@@ -1,0 +1,6 @@
+test_f1_score_comp 0.8781813712535441
+test_f1_score_rel_bool 0.7910135071770615
+test_f1_score_rel_type 0.7312141933099242
+test_f1_score_avg 0.8001363572468433
+-----------------------------------------------------------------------------
+test components classification report:

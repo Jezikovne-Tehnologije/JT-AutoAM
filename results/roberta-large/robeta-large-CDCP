@@ -1,0 +1,37 @@
+val_f1_score_comp 0.8402317869689051
+val_f1_score_rel_bool 0.6591378697575855
+val_f1_score_rel_type 0.5824663141736313
+val_f1_score_avg 0.693945323633374
+-----------------------------------------------------------------------------
+val components classification report:
+               precision    recall  f1-score   support
+
+           0      0.918     0.730     0.813       489
+           1      0.825     0.961     0.888       152
+           2      0.853     0.912     0.882       204
+           3      0.516     0.772     0.619       123
+           4      1.000     1.000     1.000         1
+
+    accuracy                          0.810       969
+   macro avg      0.822     0.875     0.840       969
+weighted avg      0.839     0.810     0.815       969
+
+val relations identification report:
+               precision    recall  f1-score   support
+
+           0      0.978     0.990     0.984      9008
+           1      0.453     0.265     0.334       272
+
+    accuracy                          0.969      9280
+   macro avg      0.715     0.628     0.659      9280
+weighted avg      0.963     0.969     0.965      9280
+
+val relations classification report:
+               precision    recall  f1-score   support
+
+           1      0.978     0.989     0.983       265
+           2      0.250     0.143     0.182         7
+
+    accuracy                          0.967       272
+   macro avg      0.614     0.566     0.582       272
+weighted avg      0.959     0.967     0.962       272
